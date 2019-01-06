@@ -1,25 +1,12 @@
-# Temporary turn on php errors
-php_flag display_startup_errors on
-php_flag display_errors on
-php_flag html_errors on
-
 # Remove www from any URLs that have them:
 RewriteEngine on
 RewriteCond %{HTTP_HOST} ^www\.
-RewriteRule ^(.*)$ http://teamtickets.tech/$1 [R=301,L]
+RewriteRule ^(.*)$ https://create.world/$1 [R=301,L]
 
 # For vue-router
 RewriteBase /
 RewriteRule ^index\.html$ - [L]
 
-# Exclude any URL path starting with "/api"
-RewriteCond %{REQUEST_URI} !^/api.*
-
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule . /index.html [L]
-
-# Everything else for "Slim Framework" PHP API
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /api.php [QSA,L]
