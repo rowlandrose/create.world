@@ -23,6 +23,10 @@ var OldSchool = {
 
         <h1 class="title is-1">Old School RPG Map Generator</h1>
 
+        <canvas></canvas>
+
+        <p>Credit to Lanea Zimmerman for <a href="https://opengameart.org/content/tiny-16-basic">tile graphics</a></p>
+
     </div>
 
     `
