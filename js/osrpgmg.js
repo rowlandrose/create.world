@@ -4,6 +4,7 @@ function osrpgmg_init() {
 	var no_cache = Math.floor(new Date().getTime() / 1000); // unix timestamp
 
 	var ctx = document.getElementById('osrpgmg').getContext('2d');
+	var hm_ctx = document.getElementById('osrpgmg_heightmap').getContext('2d');
 
 	var COLS = 160;
 	var ROWS = 120;
@@ -60,6 +61,10 @@ function osrpgmg_init() {
 		'sand_0001' : 49,
 	}
 
+	var height_map = get_height_map();
+
+	heightmap_render(height_map);
+
 	var visible_map = grass_map();
 
 	// Load tiles image
@@ -96,12 +101,96 @@ function osrpgmg_init() {
 	    }
 	}
 
+	function heightmap_render(arr) {
+
+		// Draw heightmap onto smaller canvas
+		
+		for (var c = 0; c < COLS; c++) {
+	        for (var r = 0; r < ROWS; r++) {
+
+	        	var hm_val = arr[c + (r * c)];
+
+	            hm_ctx.fillStyle = "rgba(0,0,0,"+(hm_val/100)+")";
+				hm_ctx.fillRect( c, r, 1, 1 );
+	        }
+	    }
+	}
+
 	function grass_map() {
 		var arr = [];
 		for(i = 0; i < COLS * ROWS; i++) {
 			arr.push( tiles['water_0000'] );
 		}
 		return arr;
+	}
+
+	// 0 to 99 height map
+	function get_height_map() {
+
+		var arr = [];
+		for(i = 0; i < COLS * ROWS; i++) {
+			arr.push( -1 );
+		}
+
+		// Find mid-point
+		var mid = Math.floor(arr.length / 2);
+
+		fill_heightmap(arr, mid, 0, 99);
+
+		return arr;
+	}
+
+	function fill_heightmap(arr, loc, low, high) {
+
+		if(arr[loc] == -1) {
+
+			var this_rand = randomIntFromInterval(low,high);
+			arr[loc] = this_rand;
+			// do neighbors
+			var low_rand = this_rand - 1;
+			if(low_rand < 0) {
+				low_rand = 0;
+			}
+			var high_rand = this_rand + 1;
+			if(high_rand > 99) {
+				high_rand = 99;
+			}
+			fill_heightmap(arr, get_neighbor(arr, loc, 'up'), low_rand,high_rand);
+			fill_heightmap(arr, get_neighbor(arr, loc, 'right'), low_rand,high_rand);
+			fill_heightmap(arr, get_neighbor(arr, loc, 'down'), low_rand,high_rand);
+			fill_heightmap(arr, get_neighbor(arr, loc, 'left'), low_rand,high_rand);
+		} else {
+			
+		}
+	}
+
+	function get_neighbor(map, val, dir) {
+
+		var new_val = 0;
+		var total = ROWS * COLS;
+
+		if(dir == 'up') {
+			new_val = val - COLS; // minus one row
+			if(new_val < 0) {
+				new_val += total;
+			}
+		} else if(dir == 'down') {
+			new_val = val + COLS; // add one row
+			if(new_val >= total) {
+				new_val -= total;
+			}
+		} else if(dir == 'left') {
+			new_val = val - 1;
+			if(Math.floor(new_val / COLS) != Math.floor(val / COLS)) {
+				new_val += COLS; // add one row
+			}
+		} else if(dir == 'right') {
+			new_val = val + 1;
+			if(Math.floor(new_val / COLS) != Math.floor(val / COLS)) {
+				new_val -= COLS; // minus one row
+			}
+		}
+		return new_val;
 	}
 
 	function get_tile(map, col, row) {
