@@ -1,3 +1,6 @@
 .nav-logo {
     margin-right: 10px;
 }
+.overflow_scroll {
+	overflow: scroll;
+}

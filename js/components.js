@@ -23,13 +23,21 @@ var OldSchool = {
 
         <h1 class="title is-1">Old School RPG Map Generator</h1>
 
-        <canvas></canvas>
+        <div class="overflow_scroll">
+            <canvas id="osrpgmg" width="2560" height="1920"></canvas>
+        </div>
 
         <p>Credit to Lanea Zimmerman for <a href="https://opengameart.org/content/tiny-16-basic">tile graphics</a></p>
 
     </div>
 
-    `
+    `,
+    mounted : function() {
+
+        loadScript('/js/osrpgmg.js', function() {
+            osrpgmg_init();
+        });
+    }
 };
 
 var Tickets = {
