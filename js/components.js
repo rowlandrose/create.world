@@ -23,7 +23,7 @@ var OldSchool = {
 
         <h1 class="title is-1">Old School RPG Map Generator</h1>
 
-        <canvas id="osrpgmg_heightmap" width="160" height="140"></canvas>
+        <canvas id="osrpgmg_heightmap" width="160" height="120"></canvas>
 
         <div class="overflow_scroll">
             <canvas id="osrpgmg" width="2560" height="1920"></canvas>
@@ -37,7 +37,7 @@ var OldSchool = {
     mounted : function() {
 
         loadScripts([
-            '/lib/simplex-noise/simplex-noise.js',
+            '/lib/diamond_square/diamond_square.js',
             '/js/osrpgmg.js'
         ], function() {
             osrpgmg_init();

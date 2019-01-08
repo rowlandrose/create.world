@@ -11,6 +11,12 @@ function setCookie(name, value, days) {
 
 function deleteCookie(name) { setCookie(name, '', -1); }
 
+function pad(num, size) {
+    var s = num+"";
+    while (s.length < size) s = "0" + s;
+    return s;
+}
+
 function loadScripts(urls, callback) {
 
 	var load_id = Math.floor(new Date().getTime()) + '_' + Math.floor(Math.random()*(99999-11112)+11111);
@@ -21,7 +27,7 @@ function loadScripts(urls, callback) {
 		'total' : urls.length,
 		'callback' : callback,
 		'counter' : function() {
-			
+
 			var load_data = window['script_load_'+load_id];
 			load_data.loaded++;
 			if(load_data.loaded >= load_data.total) {

@@ -195,12 +195,12 @@ function osrpgmg_init() {
 
 		var arr = [];
 
-		for (var c = 0; c < COLS; c++) {
-	        for (var r = 0; r < ROWS; r++) {
+	    for (var r = 0; r < ROWS; r++) {
+			for (var c = 0; c < COLS; c++) {
 				// All noise functions return values in the range of -1 to 1.
 
 				// noise.simplex2 and noise.perlin2 for 2d noise
-				var value = noise.perlin2(c / 10, r / 10);
+				var value = noise.simplex2(c / 40, r / 40);
 
 				arr.push(Math.round(((value + 1) / 2) * 99));
 			}
@@ -210,7 +210,7 @@ function osrpgmg_init() {
 	}*/
 
 	// Third try, using simplex-noise library
-	function get_height_map() {
+	/*function get_height_map() {
 
 		var simplex = new SimplexNoise();
 		var arr = [];
@@ -228,6 +228,31 @@ function osrpgmg_init() {
 	    console.log(arr);
 
 	    return arr;
+	}*/
+
+	// Fourth try, diamond square
+	function get_height_map() {
+
+		var init_map = [];
+		var seed = '';
+
+		for (var r = 0; r < ROWS/8; r++) {
+			for (var c = 0; c < COLS/8; c++) {
+				var this_rand = Math.round(Math.random() * 99);
+				init_map.push(this_rand);
+				seed = seed + '' + pad(this_rand, 2);
+			}
+		}
+
+		console.log(seed);
+
+		var ds = new DiamondSquare(init_map,COLS/8,ROWS/8,Math.random()*10);
+
+		ds.iterate();
+		ds.iterate();
+		ds.iterate();
+		
+		return ds.dataStore;
 	}
 
 	function get_neighbor(map, val, dir) {
