@@ -105,12 +105,12 @@ function osrpgmg_init() {
 
 		// Draw heightmap onto smaller canvas
 		
-		for (var c = 0; c < COLS; c++) {
-	        for (var r = 0; r < ROWS; r++) {
+	    for (var r = 0; r < ROWS; r++) {
+			for (var c = 0; c < COLS; c++) {
 
 	        	var hm_val = arr[c + (r * c)];
 
-	            hm_ctx.fillStyle = "rgba(0,0,0,"+(hm_val/100)+")";
+	            hm_ctx.fillStyle = "rgba(0,0,0,"+(hm_val/99)+")";
 				hm_ctx.fillRect( c, r, 1, 1 );
 	        }
 	    }
@@ -124,8 +124,10 @@ function osrpgmg_init() {
 		return arr;
 	}
 
+	// My first try, using my own method
+	// Was too weird looking, had star patterns
 	// 0 to 99 height map
-	function get_height_map() {
+	/*function get_height_map() {
 
 		var arr = [];
 		for(i = 0; i < COLS * ROWS; i++) {
@@ -162,6 +164,49 @@ function osrpgmg_init() {
 		} else {
 			
 		}
+	}*/
+
+	// Second try, with perlin noise, using library
+	// Looked very similar, though allowed zoom, but couldn't see good results
+	/*function get_height_map() {
+
+		noise.seed(Math.random());
+
+		var arr = [];
+
+		for (var c = 0; c < COLS; c++) {
+	        for (var r = 0; r < ROWS; r++) {
+				// All noise functions return values in the range of -1 to 1.
+
+				// noise.simplex2 and noise.perlin2 for 2d noise
+				var value = noise.perlin2(c / 10, r / 10);
+
+				arr.push(Math.round(((value + 1) / 2) * 99));
+			}
+		}
+
+		return arr;
+	}*/
+
+	// Third try, using simplex-noise library
+	function get_height_map() {
+
+		var simplex = new SimplexNoise();
+		var arr = [];
+
+	    for (var r = 0; r < ROWS; r++) {
+			for (var c = 0; c < COLS; c++) {
+
+	        	var value = simplex.noise2D(c / 100, r / 100); // range from -1 to 1
+	        	var new_val = Math.round(((value + 1) / 2) * 99); // range from 0 to 99
+
+	        	arr.push(new_val);
+	        }
+	    }
+
+	    console.log(arr);
+
+	    return arr;
 	}
 
 	function get_neighbor(map, val, dir) {

@@ -36,7 +36,10 @@ var OldSchool = {
     `,
     mounted : function() {
 
-        loadScript('/js/osrpgmg.js', function() {
+        loadScripts([
+            '/lib/simplex-noise/simplex-noise.js',
+            '/js/osrpgmg.js'
+        ], function() {
             osrpgmg_init();
         });
     }

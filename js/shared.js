@@ -11,6 +11,31 @@ function setCookie(name, value, days) {
 
 function deleteCookie(name) { setCookie(name, '', -1); }
 
+function loadScripts(urls, callback) {
+
+	var load_id = Math.floor(new Date().getTime()) + '_' + Math.floor(Math.random()*(99999-11112)+11111);
+
+	window['script_load_'+load_id] = {
+		'self' : this,
+		'loaded' : 0,
+		'total' : urls.length,
+		'callback' : callback,
+		'counter' : function() {
+			
+			var load_data = window['script_load_'+load_id];
+			load_data.loaded++;
+			if(load_data.loaded >= load_data.total) {
+				load_data.callback();
+			}
+		}.bind(load_id)
+	};
+
+	for(var i = 0; i < urls.length; i++) {
+
+		loadScript(urls[i], window['script_load_'+load_id]['counter']);
+	}
+}
+
 function loadScript(url, callback)
 {
 	// Only if not already loaded
