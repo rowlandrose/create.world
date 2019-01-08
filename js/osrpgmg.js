@@ -65,7 +65,7 @@ function osrpgmg_init() {
 
 	heightmap_render(height_map);
 
-	var visible_map = grass_map();
+	var visible_map = visible_map_render(height_map);
 
 	// Load tiles image
 	var tile_img = new Image();
@@ -108,7 +108,7 @@ function osrpgmg_init() {
 	    for (var r = 0; r < ROWS; r++) {
 			for (var c = 0; c < COLS; c++) {
 
-	        	var hm_val = arr[c + (r * c)];
+	        	var hm_val = arr[c + (r * COLS)];
 
 	            hm_ctx.fillStyle = "rgba(0,0,0,"+(hm_val/99)+")";
 				hm_ctx.fillRect( c, r, 1, 1 );
@@ -124,8 +124,30 @@ function osrpgmg_init() {
 		return arr;
 	}
 
+	function visible_map_render(height_map) {
+
+		var map = [];
+		for(i = 0; i < height_map.length; i++) {
+
+			var tile = 0;
+			var value = height_map[i];
+
+			if(value < 40) {
+				tile = tiles['water_0000'];
+			} else if(value < 80) {
+				tile = tiles['grass'];
+			} else if(value < 85) {
+				tile = tiles['hill_grass'];
+			} else {
+				tile = tiles['mountain_grass'];
+			}
+
+			map.push(tile);
+		}
+		return map;
+	}
+
 	// My first try, using my own method
-	// Was too weird looking, had star patterns
 	// 0 to 99 height map
 	/*function get_height_map() {
 
@@ -167,7 +189,6 @@ function osrpgmg_init() {
 	}*/
 
 	// Second try, with perlin noise, using library
-	// Looked very similar, though allowed zoom, but couldn't see good results
 	/*function get_height_map() {
 
 		noise.seed(Math.random());
@@ -197,7 +218,7 @@ function osrpgmg_init() {
 	    for (var r = 0; r < ROWS; r++) {
 			for (var c = 0; c < COLS; c++) {
 
-	        	var value = simplex.noise2D(c / 100, r / 100); // range from -1 to 1
+	        	var value = simplex.noise2D(c / 40, r / 40); // range from -1 to 1
 	        	var new_val = Math.round(((value + 1) / 2) * 99); // range from 0 to 99
 
 	        	arr.push(new_val);
