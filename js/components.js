@@ -23,10 +23,11 @@ var OldSchool = {
 
         <h1 class="title is-1">Old School RPG Map Generator</h1>
 
-        <canvas id="osrpgmg_heightmap" width="160" height="120"></canvas>
+        <canvas id="osrpgmg_heightmap" width="128" height="128"></canvas>
+        <canvas id="osrpgmg_preview" width="256" height="256"></canvas>
 
         <div class="overflow_scroll">
-            <canvas id="osrpgmg" width="2560" height="1920"></canvas>
+            <canvas id="osrpgmg" width="2048" height="2048"></canvas>
         </div>
 
         <p>Credit to Lanea Zimmerman for <a href="https://opengameart.org/content/tiny-16-basic">tile graphics</a></p>
@@ -37,7 +38,7 @@ var OldSchool = {
     mounted : function() {
 
         loadScripts([
-            '/lib/diamond_square/diamond_square.js',
+            '/lib/playfuljs/diamond_square.js',
             '/js/osrpgmg.js'
         ], function() {
             osrpgmg_init();

@@ -5,10 +5,14 @@ function osrpgmg_init() {
 
 	var ctx = document.getElementById('osrpgmg').getContext('2d');
 	var hm_ctx = document.getElementById('osrpgmg_heightmap').getContext('2d');
+	var pr_ctx = document.getElementById('osrpgmg_preview').getContext('2d');
 
-	var COLS = 160;
-	var ROWS = 120;
+	var COLS = 128;
+	var ROWS = 128;
 	var T_SIZE = 16;
+
+	var CUTOFF_TERRAIN = 80;
+	var CUTOFF_WATER = 50;
 
 	var tiles = {
 		'grass' : 0,
@@ -71,6 +75,7 @@ function osrpgmg_init() {
 	var tile_img = new Image();
 	tile_img.onload = function() {
 		osrpgmg_render();
+		preview_render();
 	};
 	tile_img.src = '/img/old_school_tiles.png';
 
@@ -110,8 +115,35 @@ function osrpgmg_init() {
 
 	        	var hm_val = arr[c + (r * COLS)];
 
-	            hm_ctx.fillStyle = "rgba(0,0,0,"+(hm_val/99)+")";
+	            hm_ctx.fillStyle = "rgba(0,0,0,"+(1-(hm_val/99))+")";
 				hm_ctx.fillRect( c, r, 1, 1 );
+	        }
+	    }
+	}
+
+	function preview_render(arr) {
+
+		// Use single pixels instead of full tiles
+		
+	    for (var c = 0; c < COLS; c++) {
+	        for (var r = 0; r < ROWS; r++) {
+
+	            var tile = get_tile(visible_map, c, r);
+
+	            var tile_x = tile % 5;
+	            var tile_y = Math.floor(tile / 5);
+	            
+	            pr_ctx.drawImage(
+	                tile_img, // image
+	                tile_x * T_SIZE, // source x
+	                tile_y * T_SIZE, // source y
+	                T_SIZE, // source width
+	                T_SIZE, // source height
+	                c * 2,  // target x
+	                r * 2, // target y
+	                2, // target width
+	                2 // target height
+	            );
 	        }
 	    }
 	}
@@ -132,9 +164,9 @@ function osrpgmg_init() {
 			var tile = 0;
 			var value = height_map[i];
 
-			if(value < 40) {
+			if(value < CUTOFF_WATER) {
 				tile = tiles['water_0000'];
-			} else if(value < 80) {
+			} else if(value < CUTOFF_TERRAIN) {
 				tile = tiles['grass'];
 			} else if(value < 85) {
 				tile = tiles['hill_grass'];
@@ -231,28 +263,162 @@ function osrpgmg_init() {
 	}*/
 
 	// Fourth try, diamond square
-	function get_height_map() {
+	// Never worked right, was diagonal lines
+	/*function get_height_map() {
 
-		var init_map = [];
+		var init_map = [0,0,0,0];
 		var seed = '';
 
-		for (var r = 0; r < ROWS/8; r++) {
-			for (var c = 0; c < COLS/8; c++) {
-				var this_rand = Math.round(Math.random() * 99);
-				init_map.push(this_rand);
-				seed = seed + '' + pad(this_rand, 2);
-			}
-		}
+		var iterations = 5;
+		var divide = Math.pow(2, iterations);
+
+		//for(i = 0; i < (ROWS/divide)*(COLS/divide); i++) {
+		//	var this_rand = Math.round(Math.random() * 99);
+		//	init_map.push(this_rand);
+		//	seed = seed + '' + pad(this_rand, 2);
+		//}
 
 		console.log(seed);
 
-		var ds = new DiamondSquare(init_map,COLS/8,ROWS/8,Math.random()*10);
+		var ds = new DiamondSquare(init_map,COLS/divide,ROWS/divide,Math.random()*10);
 
-		ds.iterate();
-		ds.iterate();
-		ds.iterate();
+		for(var i = 0; i < iterations; i++ ) {
+			ds.iterate();
+		}
 		
 		return ds.dataStore;
+	}*/
+
+	function reset_min_max(map) {
+
+		var max = map.reduce(function(a, b) {
+		    return Math.max(a, b);
+		});
+
+	    var min = map.reduce(function(a, b) {
+		    return Math.min(a, b);
+		});
+
+	    var new_min = 0;
+	    var new_max = max - min;
+
+		var arr = [];
+
+	    for (var r = 0; r < ROWS; r++) {
+			for (var c = 0; c < COLS; c++) {
+
+	        	arr.push( (map[c + (r * COLS)] - min) * 99 / new_max );
+	        }
+	    }
+
+	    return arr;
+	}
+
+	// Fifth try, diamond square
+	function get_height_map() {
+
+		var terrain = new Terrain(7); // 7 -> 2^7 -> 128, 6 -> 2^6 -> 64
+		terrain.generate(1);
+
+		var arr = [];
+
+		for (var r = 0; r < ROWS; r++) {
+			for (var c = 0; c < COLS; c++) {
+				arr.push(terrain.get(c,r));
+			}
+		}
+
+		// Set min and max to 0 and 99, recalculate map
+
+	    arr = reset_min_max(arr);
+
+		// Now make edges ocean, with gradual transition
+
+		var center_x = (COLS / 2) - 1;
+		var center_y = (ROWS / 2) - 1;
+
+		var land_radius = 40;
+
+		for (var r = 0; r < ROWS; r++) {
+			for (var c = 0; c < COLS; c++) {
+
+				var dist = get_dist(center_x, center_y, c, r);
+
+				if(dist > land_radius) {
+
+					var further = dist - land_radius;
+
+					var old_val = arr[ (r * COLS) + c];
+					var new_val = old_val * ((40 - (further)) / 40);
+					if(new_val < 0 || r == 0 || c == 0 || r == ROWS - 1 || c == COLS - 1) {
+						new_val = 0;
+					}
+
+					arr[ (r * COLS) + c] = new_val;
+				}
+			}
+		}
+
+		arr = reset_min_max(arr);
+
+		// Get another heightmap, with no island, and combine with original 
+		// where meets land, to get more varied mountains
+
+		var terrain_adjust = new Terrain(7); // 7 -> 2^7 -> 128, 6 -> 2^6 -> 64
+		terrain_adjust.generate(1);
+
+		var arr_adjust = [];
+
+		for (var r = 0; r < ROWS; r++) {
+			for (var c = 0; c < COLS; c++) {
+				arr_adjust.push(terrain_adjust.get(c,r));
+			}
+		}
+
+		arr_adjust = reset_min_max(arr_adjust);
+
+		var arr_2 = [];
+
+		for (var r = 0; r < ROWS; r++) {
+			for (var c = 0; c < COLS; c++) {
+
+				first_val = arr[ (r * COLS) + c];
+				second_val = arr_adjust[ (r * COLS) + c];
+
+				var new_val = arr[ (r * COLS) + c];
+
+				if(first_val >= CUTOFF_WATER) {
+
+					var diff = second_val - first_val;
+
+					var adjust = diff / 1;
+
+					if(first_val >= CUTOFF_TERRAIN) {
+						adjust = diff / 10;
+					}
+
+					new_val = first_val + adjust;
+
+					if(new_val < CUTOFF_WATER ) {
+						new_val = CUTOFF_WATER;
+					}
+				}
+
+				arr_2.push(new_val);
+			}
+		}
+
+		//arr_2 = reset_min_max(arr_2);
+
+	    return arr_2;
+	}
+
+	function get_dist(x1, y1, x2, y2) {
+
+		var a = x1 - x2;
+		var b = y1 - y2;
+
+		return Math.sqrt( a*a + b*b );
 	}
 
 	function get_neighbor(map, val, dir) {
