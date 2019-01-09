@@ -72,7 +72,7 @@ function osrpgmg_init() {
 		'thick_grass' : 'grass',
 		'thicker_grass' : 'grass',
 		'forest' : 'forest',
-		'swamp' : 'grass',
+		'swamp' : 'swamp',
 		'castle_grass' : 'castle',
 		'town_grass' : 'town',
 		'castle_sand' : 'castle',
@@ -327,6 +327,44 @@ function osrpgmg_init() {
 
 			if(perlin_map_3[i] > 80 && tile_type[tile_by_num[map[i]]] == 'grass') {
 				map[i] = tiles['swamp'];
+			}
+		}
+
+		// Generate coastline dunes
+
+		for(i = 0; i < map.length; i++) {
+
+			if(tile_type[tile_by_num[map[i]]] == 'grass') {
+
+				var next_to_water = false;
+
+				var up = get_neighbor(map, i, 'up');
+
+				if( tile_type[tile_by_num[map[up]]] == 'water' ) {
+					next_to_water = true;
+				} else {
+					var down = get_neighbor(map, i, 'down');
+
+					if( tile_type[tile_by_num[map[down]]] == 'water' ) {
+						next_to_water = true;
+					} else {
+						var left = get_neighbor(map, i, 'left');
+
+						if( tile_type[tile_by_num[map[left]]] == 'water' ) {
+							next_to_water = true;
+						} else {
+							var right = get_neighbor(map, i, 'right');
+
+							if( tile_type[tile_by_num[map[right]]] == 'water' ) {
+								next_to_water = true;
+							}
+						}
+					}
+				}
+
+				if(next_to_water && Math.random() < 0.75) {
+					map[i] = tiles['sand_0000'];
+				}
 			}
 		}
 
