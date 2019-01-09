@@ -12,6 +12,7 @@ function osrpgmg_init() {
 
 	var CUTOFF_TERRAIN = 80;
 	var CUTOFF_WATER = 50;
+	var RIVER_START_MIN_DIST = 5;
 
 	var tiles = {
 		'grass' : 0,
@@ -321,8 +322,6 @@ function osrpgmg_init() {
 
 		var perlin_map_3 = get_perlin_noise(20);
 
-		heightmap_render(perlin_map_3, 3);
-
 		for(i = 0; i < height_map.length; i++) {
 
 			if(perlin_map_3[i] > 80 && tile_type[tile_by_num[map[i]]] == 'grass') {
@@ -367,6 +366,181 @@ function osrpgmg_init() {
 				}
 			}
 		}
+
+		// Generate river starting points
+
+		var valid_river_starts = [];
+
+		for(i = 0; i < height_map.length; i++) {
+
+			var value = height_map[i];
+
+			if(value > CUTOFF_TERRAIN - 10) {
+				valid_river_starts.push(i);
+			}
+
+			/*var type = tile_type[tile_by_num[map[i]]];
+
+			if(type == 'mountain' || type == 'hill') {
+				valid_river_starts.push(i);
+			}*/
+		}
+
+		console.log(valid_river_starts);
+
+		var fraction_river_valid = valid_river_starts.length / map.length;
+
+		var river_start_num = Math.ceil(fraction_river_valid * 100);
+
+		var river_starts = [];
+
+		var close_count = 0;
+
+		console.log(river_start_num);
+
+		for(i = 0; i < river_start_num; i++) {
+
+			if(close_count > 50) {
+				break;
+			}
+
+			var river_start = valid_river_starts[Math.floor(Math.random() * valid_river_starts.length)];
+
+			/*if(river_starts.length) {
+
+				var new_x = river_start % COLS;
+	            var new_y = Math.floor(river_start / ROWS);
+
+				for(j = 0; j < river_starts.length; j++) {
+
+					var old_x = river_starts[j] % COLS;
+	            	var old_y = Math.floor(river_starts[j] / ROWS);
+					var dist = get_dist(new_x, new_x, old_x, old_y);
+
+					console.log(dist);
+
+					if(dist < RIVER_START_MIN_DIST) {
+						i--;
+						close_count++;
+						break;
+					}
+				}
+				river_starts.push(river_start);
+			} else {
+				river_starts.push(river_start);
+			}*/
+
+			river_starts.push(river_start);
+		}
+
+		console.log(river_starts);
+
+		// Draw each river
+
+		// binary map of river placement
+
+		var last_dir_opposite = '';
+
+		for(i = 0; i < river_starts.length; i++) {
+		//for(i = 0; i < 1; i++) {
+
+			console.log('starting new river');
+
+			var river_map = [];
+
+			for(j = 0; j < height_map.length; j++) {
+				river_map.push(0);
+			}
+
+			var draw_spot = river_starts[i];
+			river_map[draw_spot] = 99;
+
+			// Skip this river start if already under water
+			if(tile_type[tile_by_num[map[draw_spot]]] == 'water') {
+				continue;
+			}
+
+			// Determine flow direction
+
+			var flowing = true;
+
+			var flow_count = 0;
+
+			while(flowing) {
+
+				if(flow_count > 5000) {
+					
+					break;
+				}
+
+				var flow_options = ['up','down','left','right'];
+
+				var flow_dir = flow_options[Math.floor(Math.random() * 4)];
+
+				//console.log('river map val: '+river_map[get_neighbor(river_map, draw_spot, flow_dir)]);
+
+				if(river_map[get_neighbor(river_map, draw_spot, flow_dir)] == 99) {
+
+					//console.log('here');
+					flow_count++;
+					// Try again
+					continue;
+				}
+
+				var flow_data = {
+					'up' : get_neighbor(height_map, draw_spot, 'up'),
+					'down' : get_neighbor(height_map, draw_spot, 'down'),
+					'left' : get_neighbor(height_map, draw_spot, 'left'),
+					'right' : get_neighbor(height_map, draw_spot, 'right')
+				};
+
+				if(up < flow_data[flow_dir]) {
+					flow_dir = 'up';
+				}
+				if(down < flow_data[flow_dir]) {
+					flow_dir = 'down';
+				}
+				if(left < flow_data[flow_dir]) {
+					flow_dir = 'left';
+				}
+				if(right < flow_data[flow_dir]) {
+					flow_dir = 'right';
+				}
+
+				var new_draw_spot = get_neighbor(river_map, draw_spot, flow_dir);
+
+				// If over water, or prev spot, draw and stop
+				if(tile_type[tile_by_num[map[new_draw_spot]]] == 'water' ||
+					river_map[new_draw_spot] == 99) {
+
+					for(j = 0; j < river_map.length; j++) {
+
+						if(river_map[j] == 99) {
+							map[j] = tiles['water_0000'];
+						}
+					}
+
+					flowing = false;
+
+					break;
+				}
+
+				river_map[new_draw_spot] = 99;
+
+				draw_spot = new_draw_spot;
+
+				flow_count++;
+			}
+
+			heightmap_render(river_map, 3);
+		}
+
+		// Temp display river starts
+
+		/*for(i = 0; i < river_starts.length; i++) {
+
+			map[river_starts[i]] = tiles['water_1111'];
+		}*/
 
 		return map;
 	}
