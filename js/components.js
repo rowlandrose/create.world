@@ -25,6 +25,7 @@ var OldSchool = {
 
         <canvas id="osrpgmg_heightmap_1" width="128" height="128"></canvas>
         <canvas id="osrpgmg_heightmap_2" width="128" height="128"></canvas>
+        <canvas id="osrpgmg_heightmap_3" width="128" height="128"></canvas>
         <canvas id="osrpgmg_preview" width="256" height="256"></canvas>
 
         <div class="overflow_scroll">

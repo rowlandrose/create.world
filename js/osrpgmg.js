@@ -64,6 +64,59 @@ function osrpgmg_init() {
 		'sand_0001' : 49,
 	}
 
+	var tile_by_num = swap(tiles);
+
+	var tile_type = {
+		'grass' : 'grass',
+		'flowers' : 'grass',
+		'thick_grass' : 'grass',
+		'thicker_grass' : 'grass',
+		'forest' : 'forest',
+		'swamp' : 'grass',
+		'castle_grass' : 'castle',
+		'town_grass' : 'town',
+		'castle_sand' : 'castle',
+		'town_sand' : 'town',
+		'bridge_up_down' : 'bridge',
+		'bridge_left_right' : 'bridge',
+		'water_0000' : 'water',
+		'sand_0000' : 'sand',
+		'hill_grass' : 'hill',
+		'mountain_grass' : 'mountain',
+		'hill_sand' : 'hill',
+		'mountain_sand' : 'mountain',
+		'water_1111' : 'water',
+		'water_1001' : 'water',
+		'water_1100' : 'water',
+		'water_0011' : 'water',
+		'water_0110' : 'water',
+		'water_1010' : 'water',
+		'water_1101' : 'water',
+		'water_1110' : 'water',
+		'water_1011' : 'water',
+		'water_0111' : 'water',
+		'water_0101' : 'water',
+		'water_1000' : 'water',
+		'water_0100' : 'water',
+		'water_0010' : 'water',
+		'water_0001' : 'water',
+		'sand_1111' : 'sand',
+		'sand_1001' : 'sand',
+		'sand_1100' : 'sand',
+		'sand_0011' : 'sand',
+		'sand_0110' : 'sand',
+		'sand_1010' : 'sand',
+		'sand_1101' : 'sand',
+		'sand_1110' : 'sand',
+		'sand_1011' : 'sand',
+		'sand_0111' : 'sand',
+		'sand_0101' : 'sand',
+		'sand_1000' : 'sand',
+		'sand_0100' : 'sand',
+		'sand_0010' : 'sand',
+		'sand_0001' : 'sand',
+	};
+
 	var height_map = get_height_map();
 
 	heightmap_render(height_map);
@@ -222,9 +275,37 @@ function osrpgmg_init() {
 				if(map[i] == tiles['grass']) {
 					map[i] = tiles['forest'];
 				}
-			}
+			} else if(perlin_combine_map[i] > 50) {
 
-			if(perlin_combine_map[i] < 30) {
+				if(map[i] == tiles['grass']) {
+
+					if(Math.random() > 0.25) {
+						map[i] = tiles['thicker_grass'];
+					} else if(Math.random() > 0.25) {
+						map[i] = tiles['thick_grass'];
+					} else if(Math.random() > 0.25) {
+						map[i] = tiles['flowers'];
+					}
+				}
+
+			} else if(perlin_combine_map[i] > 40) {
+
+				if(map[i] == tiles['grass']) {
+
+					if(Math.random() > 0.5) {
+						map[i] = tiles['thick_grass'];
+					} else if(Math.random() > 0.5) {
+						map[i] = tiles['flowers'];
+					}
+				}
+
+			} else if(perlin_combine_map[i] > 30) {
+
+				if(map[i] == tiles['grass'] && Math.random() > 0.95) {
+					map[i] = tiles['flowers'];
+				}
+
+			} else if(perlin_combine_map[i] < 30) {
 
 				if(map[i] == tiles['grass']) {
 					map[i] = tiles['sand_0000'];
@@ -233,6 +314,19 @@ function osrpgmg_init() {
 				} else if(map[i] == tiles['mountain_grass']) {
 					map[i] = tiles['mountain_sand'];
 				}
+			}
+		}
+
+		// Add wetlands / swamp
+
+		var perlin_map_3 = get_perlin_noise(20);
+
+		heightmap_render(perlin_map_3, 3);
+
+		for(i = 0; i < height_map.length; i++) {
+
+			if(perlin_map_3[i] > 80 && tile_type[tile_by_num[map[i]]] == 'grass') {
+				map[i] = tiles['swamp'];
 			}
 		}
 

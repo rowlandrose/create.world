@@ -17,6 +17,14 @@ function pad(num, size) {
     return s;
 }
 
+function swap(obj){
+	var ret = {};
+	for(var key in obj){
+		ret[obj[key]] = key;
+	}
+	return ret;
+}
+
 function loadScripts(urls, callback) {
 
 	var load_id = Math.floor(new Date().getTime()) + '_' + Math.floor(Math.random()*(99999-11112)+11111);
