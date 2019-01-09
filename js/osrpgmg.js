@@ -4,7 +4,6 @@ function osrpgmg_init() {
 	var no_cache = Math.floor(new Date().getTime() / 1000); // unix timestamp
 
 	var ctx = document.getElementById('osrpgmg').getContext('2d');
-	var hm_ctx = document.getElementById('osrpgmg_heightmap').getContext('2d');
 	var pr_ctx = document.getElementById('osrpgmg_preview').getContext('2d');
 
 	var COLS = 128;
@@ -69,7 +68,7 @@ function osrpgmg_init() {
 
 	heightmap_render(height_map);
 
-	var visible_map = visible_map_render(height_map);
+	var visible_map = get_visible_map(height_map);
 
 	// Load tiles image
 	var tile_img = new Image();
@@ -106,9 +105,15 @@ function osrpgmg_init() {
 	    }
 	}
 
-	function heightmap_render(arr) {
+	function heightmap_render(arr, num) {
+
+		if(typeof num === 'undefined') {
+			num = 1;
+		}
 
 		// Draw heightmap onto smaller canvas
+
+		var hm_ctx = document.getElementById('osrpgmg_heightmap_'+num).getContext('2d');
 		
 	    for (var r = 0; r < ROWS; r++) {
 			for (var c = 0; c < COLS; c++) {
@@ -156,9 +161,12 @@ function osrpgmg_init() {
 		return arr;
 	}
 
-	function visible_map_render(height_map) {
+	function get_visible_map(height_map) {
 
 		var map = [];
+
+		// First determine water, grass, hill and mountain based on heightmap
+
 		for(i = 0; i < height_map.length; i++) {
 
 			var tile = 0;
@@ -176,6 +184,58 @@ function osrpgmg_init() {
 
 			map.push(tile);
 		}
+
+		// Determine forest & desert with perlin noise
+		// Low parts are forest, high are desert
+		// Only apply forest to grass
+		// Desert can apply to grass, hills and mountain
+
+		var perlin_map = get_perlin_noise(80);
+
+		// combine perlin noise with a finer perlin noise, for more details
+
+		var perlin_map_2 = get_perlin_noise(20);
+
+		var perlin_combine_map = [];
+
+		for(i = 0; i < perlin_map.length; i++) {
+
+			first_val = perlin_map[i];
+			second_val = perlin_map_2[i];
+
+			var diff = second_val - first_val;
+
+			var adjust = diff / 4;
+
+			var new_val = first_val + adjust;
+
+			perlin_combine_map.push(new_val);
+		}
+
+		heightmap_render(perlin_combine_map, 2);
+
+		for(i = 0; i < height_map.length; i++) {
+
+			
+			if(perlin_combine_map[i] > 60) {
+
+				if(map[i] == tiles['grass']) {
+					map[i] = tiles['forest'];
+				}
+			}
+
+			if(perlin_combine_map[i] < 30) {
+
+				if(map[i] == tiles['grass']) {
+					map[i] = tiles['sand_0000'];
+				} else if(map[i] == tiles['hill_grass']) {
+					map[i] = tiles['hill_sand'];
+				} else if(map[i] == tiles['mountain_grass']) {
+					map[i] = tiles['mountain_sand'];
+				}
+			}
+		}
+
 		return map;
 	}
 
@@ -220,8 +280,8 @@ function osrpgmg_init() {
 		}
 	}*/
 
-	// Second try, with perlin noise, using library
-	/*function get_height_map() {
+	// Perlin noise
+	function get_perlin_noise(adjust) {
 
 		noise.seed(Math.random());
 
@@ -232,62 +292,14 @@ function osrpgmg_init() {
 				// All noise functions return values in the range of -1 to 1.
 
 				// noise.simplex2 and noise.perlin2 for 2d noise
-				var value = noise.simplex2(c / 40, r / 40);
+				var value = noise.simplex2(c / adjust, r / adjust);
 
 				arr.push(Math.round(((value + 1) / 2) * 99));
 			}
 		}
 
 		return arr;
-	}*/
-
-	// Third try, using simplex-noise library
-	/*function get_height_map() {
-
-		var simplex = new SimplexNoise();
-		var arr = [];
-
-	    for (var r = 0; r < ROWS; r++) {
-			for (var c = 0; c < COLS; c++) {
-
-	        	var value = simplex.noise2D(c / 40, r / 40); // range from -1 to 1
-	        	var new_val = Math.round(((value + 1) / 2) * 99); // range from 0 to 99
-
-	        	arr.push(new_val);
-	        }
-	    }
-
-	    console.log(arr);
-
-	    return arr;
-	}*/
-
-	// Fourth try, diamond square
-	// Never worked right, was diagonal lines
-	/*function get_height_map() {
-
-		var init_map = [0,0,0,0];
-		var seed = '';
-
-		var iterations = 5;
-		var divide = Math.pow(2, iterations);
-
-		//for(i = 0; i < (ROWS/divide)*(COLS/divide); i++) {
-		//	var this_rand = Math.round(Math.random() * 99);
-		//	init_map.push(this_rand);
-		//	seed = seed + '' + pad(this_rand, 2);
-		//}
-
-		console.log(seed);
-
-		var ds = new DiamondSquare(init_map,COLS/divide,ROWS/divide,Math.random()*10);
-
-		for(var i = 0; i < iterations; i++ ) {
-			ds.iterate();
-		}
-		
-		return ds.dataStore;
-	}*/
+	}
 
 	function reset_min_max(map) {
 
@@ -332,6 +344,30 @@ function osrpgmg_init() {
 
 	    arr = reset_min_max(arr);
 
+	    // Now combine with a perlin noise heightmap
+
+	    var perlin_map = get_perlin_noise(40);
+
+		var arr_2 = [];
+
+	    for (var r = 0; r < ROWS; r++) {
+			for (var c = 0; c < COLS; c++) {
+
+				first_val = arr[ (r * COLS) + c];
+				second_val = perlin_map[ (r * COLS) + c];
+
+				var new_val = arr[ (r * COLS) + c];
+
+				var diff = second_val - first_val;
+
+				var adjust = diff / 4;
+
+				new_val = first_val + adjust;
+
+				arr_2.push(new_val);
+			}
+		}
+
 		// Now make edges ocean, with gradual transition
 
 		var center_x = (COLS / 2) - 1;
@@ -348,18 +384,18 @@ function osrpgmg_init() {
 
 					var further = dist - land_radius;
 
-					var old_val = arr[ (r * COLS) + c];
+					var old_val = arr_2[ (r * COLS) + c];
 					var new_val = old_val * ((40 - (further)) / 40);
 					if(new_val < 0 || r == 0 || c == 0 || r == ROWS - 1 || c == COLS - 1) {
 						new_val = 0;
 					}
 
-					arr[ (r * COLS) + c] = new_val;
+					arr_2[ (r * COLS) + c] = new_val;
 				}
 			}
 		}
 
-		arr = reset_min_max(arr);
+		arr_2 = reset_min_max(arr_2);
 
 		// Get another heightmap, with no island, and combine with original 
 		// where meets land, to get more varied mountains
@@ -377,15 +413,15 @@ function osrpgmg_init() {
 
 		arr_adjust = reset_min_max(arr_adjust);
 
-		var arr_2 = [];
+		var arr_3 = [];
 
 		for (var r = 0; r < ROWS; r++) {
 			for (var c = 0; c < COLS; c++) {
 
-				first_val = arr[ (r * COLS) + c];
+				first_val = arr_2[ (r * COLS) + c];
 				second_val = arr_adjust[ (r * COLS) + c];
 
-				var new_val = arr[ (r * COLS) + c];
+				var new_val = arr_2[ (r * COLS) + c];
 
 				if(first_val >= CUTOFF_WATER) {
 
@@ -404,13 +440,13 @@ function osrpgmg_init() {
 					}
 				}
 
-				arr_2.push(new_val);
+				arr_3.push(new_val);
 			}
 		}
 
-		//arr_2 = reset_min_max(arr_2);
+		//arr_3 = reset_min_max(arr_3);
 
-	    return arr_2;
+	    return arr_3;
 	}
 
 	function get_dist(x1, y1, x2, y2) {

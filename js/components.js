@@ -23,7 +23,8 @@ var OldSchool = {
 
         <h1 class="title is-1">Old School RPG Map Generator</h1>
 
-        <canvas id="osrpgmg_heightmap" width="128" height="128"></canvas>
+        <canvas id="osrpgmg_heightmap_1" width="128" height="128"></canvas>
+        <canvas id="osrpgmg_heightmap_2" width="128" height="128"></canvas>
         <canvas id="osrpgmg_preview" width="256" height="256"></canvas>
 
         <div class="overflow_scroll">
@@ -39,6 +40,7 @@ var OldSchool = {
 
         loadScripts([
             '/lib/playfuljs/diamond_square.js',
+            '/lib/noisejs/2014-07-07/perlin.js',
             '/js/osrpgmg.js'
         ], function() {
             osrpgmg_init();
