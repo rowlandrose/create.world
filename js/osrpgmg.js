@@ -78,14 +78,14 @@ function osrpgmg_init() {
 		'town_grass' : 'town',
 		'castle_sand' : 'castle',
 		'town_sand' : 'town',
-		'bridge_up_down' : 'bridge',
-		'bridge_left_right' : 'bridge',
+		'bridge_up_down' : 'water',
+		'bridge_left_right' : 'water',
 		'water_0000' : 'water',
 		'sand_0000' : 'sand',
-		'hill_grass' : 'hill',
-		'mountain_grass' : 'mountain',
-		'hill_sand' : 'hill',
-		'mountain_sand' : 'mountain',
+		'hill_grass' : 'grass',
+		'mountain_grass' : 'grass',
+		'hill_sand' : 'sand',
+		'mountain_sand' : 'sand',
 		'water_1111' : 'water',
 		'water_1001' : 'water',
 		'water_1100' : 'water',
@@ -124,6 +124,8 @@ function osrpgmg_init() {
 
 	var visible_map = get_visible_map(height_map);
 
+	do_transition_graphics();
+
 	// Load tiles image
 	var tile_img = new Image();
 	tile_img.onload = function() {
@@ -155,6 +157,59 @@ function osrpgmg_init() {
 	                T_SIZE, // target width
 	                T_SIZE // target height
 	            );
+	        }
+	    }
+	}
+
+	function do_transition_graphics() {
+
+	    for (var r = 0; r < ROWS; r++) {
+			for (var c = 0; c < COLS; c++) {
+
+				var pos = c + (r * COLS);
+
+	            var tile = get_tile(visible_map, c, r);
+	            var new_tile = tile;
+
+            	var directions = [
+            		tile_type[tile_by_num[visible_map[get_neighbor(pos, 'up')]]],
+            		tile_type[tile_by_num[visible_map[get_neighbor(pos, 'right')]]],
+            		tile_type[tile_by_num[visible_map[get_neighbor(pos, 'down')]]],
+            		tile_type[tile_by_num[visible_map[get_neighbor(pos, 'left')]]]
+            	];
+
+	            if(tile_by_num[tile] == 'sand_0000') {
+
+	            	var substr = '';
+
+	            	for(var i = 0; i < directions.length; i++) {
+
+	            		if(directions[i] == 'sand' || directions[i] == 'water') {
+	            			substr = substr + '0';
+		            	} else {
+		            		substr = substr + '1';
+		            	}
+	            	}
+
+	            	new_tile = tiles['sand_'+substr];
+	            } 
+	            else if(tile_by_num[tile] == 'water_0000') {
+
+	            	var substr = '';
+
+	            	for(var i = 0; i < directions.length; i++) {
+
+	            		if(directions[i] == 'water') {
+	            			substr = substr + '0';
+		            	} else {
+		            		substr = substr + '1';
+		            	}
+	            	}
+
+	            	new_tile = tiles['water_'+substr];
+	            }
+
+	            visible_map[pos] = new_tile;
 	        }
 	    }
 	}
@@ -205,14 +260,6 @@ function osrpgmg_init() {
 	            );
 	        }
 	    }
-	}
-
-	function grass_map() {
-		var arr = [];
-		for(i = 0; i < COLS * ROWS; i++) {
-			arr.push( tiles['water_0000'] );
-		}
-		return arr;
 	}
 
 	function get_visible_map(height_map) {
@@ -534,6 +581,59 @@ function osrpgmg_init() {
 				}
 
 				flow_count++;
+			}
+		}
+
+		// Bridges
+
+		var valid_bridge_positions = [];
+
+		for(var i = 0; i < river_map_all.length; i++) {
+
+			if(river_map_all[i] == 99) {
+
+				var directions = {
+					'up' : get_neighbor(i, 'up'),
+					'down' : get_neighbor(i, 'down'),
+					'left' : get_neighbor(i, 'left'),
+					'right' : get_neighbor(i, 'right')
+				};
+
+				if( ( river_map_all[directions['up']] == 0 && tile_type[tile_by_num[map[directions['up']]]] != 'water' && river_map_all[directions['down']] == 0 && tile_type[tile_by_num[map[directions['down']]]] != 'water' ) ||
+					( river_map_all[directions['left']] == 0 && tile_type[tile_by_num[map[directions['left']]]] != 'water' && river_map_all[directions['right']] == 0 && tile_type[tile_by_num[map[directions['right']]]] != 'water' )
+				) {
+					valid_bridge_positions.push(i);
+				}
+			}
+		}
+
+		console.log(valid_bridge_positions);
+		console.log(river_start_num);
+
+		for(var i = 0; i < river_start_num; i++) {
+
+			var rand_pos = valid_bridge_positions[Math.floor(Math.random() * valid_bridge_positions.length)];
+
+			// Make sure now bridges adjacent
+			var dir = {
+				'up'    : get_neighbor(rand_pos, 'up'),
+				'down'  : get_neighbor(rand_pos, 'down'),
+				'left'  : get_neighbor(rand_pos, 'left'),
+				'right' : get_neighbor(rand_pos, 'right')
+			};
+
+			if(map[dir['up']] == tiles['bridge_up_down'] || map[dir['up']] == tiles['bridge_left_right'] ||
+				map[dir['down']] == tiles['bridge_up_down'] || map[dir['down']] == tiles['bridge_left_right'] ||
+				map[dir['left']] == tiles['bridge_up_down'] || map[dir['left']] == tiles['bridge_left_right'] ||
+				map[dir['right']] == tiles['bridge_up_down'] || map[dir['right']] == tiles['bridge_left_right']
+			) {
+				continue;
+			}
+
+			if( river_map_all[dir['up']] == 0 ) {
+				map[rand_pos] = tiles['bridge_up_down'];
+			} else {
+				map[rand_pos] = tiles['bridge_left_right'];
 			}
 		}
 
