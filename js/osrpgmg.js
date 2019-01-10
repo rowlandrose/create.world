@@ -29,10 +29,12 @@ function osrpgmg_init() {
 		'bridge_left_right' : 11,
 		'water_0000' : 12,
 		'sand_0000' : 13,
+		'cave_grass' : 14,
 		'hill_grass' : 15,
 		'mountain_grass' : 16,
 		'hill_sand' : 17,
 		'mountain_sand' : 18,
+		'cave_sand' : 19,
 		'water_1111' : 20,
 		'water_1001' : 21,
 		'water_1100' : 22,
@@ -72,20 +74,22 @@ function osrpgmg_init() {
 		'flowers' : 'grass',
 		'thick_grass' : 'grass',
 		'thicker_grass' : 'grass',
-		'forest' : 'forest',
+		'forest' : 'grass',
 		'swamp' : 'swamp',
-		'castle_grass' : 'castle',
-		'town_grass' : 'town',
-		'castle_sand' : 'castle',
-		'town_sand' : 'town',
+		'castle_grass' : 'grass',
+		'town_grass' : 'grass',
+		'castle_sand' : 'sand',
+		'town_sand' : 'sand',
 		'bridge_up_down' : 'water',
 		'bridge_left_right' : 'water',
 		'water_0000' : 'water',
 		'sand_0000' : 'sand',
+		'cave_grass' : 'grass',
 		'hill_grass' : 'grass',
 		'mountain_grass' : 'grass',
 		'hill_sand' : 'sand',
 		'mountain_sand' : 'sand',
+		'cave_sand' : 'sand',
 		'water_1111' : 'water',
 		'water_1001' : 'water',
 		'water_1100' : 'water',
@@ -116,6 +120,59 @@ function osrpgmg_init() {
 		'sand_0100' : 'sand',
 		'sand_0010' : 'sand',
 		'sand_0001' : 'sand',
+	};
+
+	var walkable = {
+		'grass'             : true,
+		'flowers'           : true,
+		'thick_grass'       : true,
+		'thicker_grass'     : true,
+		'forest'            : true,
+		'swamp'             : true,
+		'castle_grass'      : true,
+		'town_grass'        : true,
+		'castle_sand'       : true,
+		'town_sand'         : true,
+		'bridge_up_down'    : true,
+		'bridge_left_right' : true,
+		'water_0000'        : false,
+		'sand_0000'         : true,
+		'cave_grass'        : true,
+		'hill_grass'        : true,
+		'mountain_grass'    : false,
+		'hill_sand'         : true,
+		'mountain_sand'     : false,
+		'cave_sand'         : true,
+		'water_1111'        : false,
+		'water_1001'        : false,
+		'water_1100'        : false,
+		'water_0011'        : false,
+		'water_0110'        : false,
+		'water_1010'        : false,
+		'water_1101'        : false,
+		'water_1110'        : false,
+		'water_1011'        : false,
+		'water_0111'        : false,
+		'water_0101'        : false,
+		'water_1000'        : false,
+		'water_0100'        : false,
+		'water_0010'        : false,
+		'water_0001'        : false,
+		'sand_1111'         : true,
+		'sand_1001'         : true,
+		'sand_1100'         : true,
+		'sand_0011'         : true,
+		'sand_0110'         : true,
+		'sand_1010'         : true,
+		'sand_1101'         : true,
+		'sand_1110'         : true,
+		'sand_1011'         : true,
+		'sand_0111'         : true,
+		'sand_0101'         : true,
+		'sand_1000'         : true,
+		'sand_0100'         : true,
+		'sand_0010'         : true,
+		'sand_0001'         : true,
 	};
 
 	var height_map = get_height_map();
@@ -425,15 +482,7 @@ function osrpgmg_init() {
 			if(value > CUTOFF_TERRAIN - 10) {
 				valid_river_starts.push(i);
 			}
-
-			/*var type = tile_type[tile_by_num[map[i]]];
-
-			if(type == 'mountain' || type == 'hill') {
-				valid_river_starts.push(i);
-			}*/
 		}
-
-		console.log(valid_river_starts);
 
 		var fraction_river_valid = valid_river_starts.length / map.length;
 
@@ -443,8 +492,6 @@ function osrpgmg_init() {
 
 		var close_count = 0;
 
-		console.log(river_start_num);
-
 		for(i = 0; i < river_start_num; i++) {
 
 			if(close_count > 50) {
@@ -452,6 +499,8 @@ function osrpgmg_init() {
 			}
 
 			var river_start = valid_river_starts[Math.floor(Math.random() * valid_river_starts.length)];
+
+			// Attempt to control distance between river starts
 
 			/*if(river_starts.length) {
 
@@ -480,8 +529,6 @@ function osrpgmg_init() {
 			river_starts.push(river_start);
 		}
 
-		console.log(river_starts);
-
 		// Draw each river
 
 		// binary map of river placement
@@ -494,9 +541,6 @@ function osrpgmg_init() {
 		}
 
 		for(i = 0; i < river_starts.length; i++) {
-		//for(i = 0; i < 1; i++) {
-
-			console.log('starting new river');
 
 			var river_map = [];
 
@@ -584,6 +628,8 @@ function osrpgmg_init() {
 			}
 		}
 
+		heightmap_render(river_map_all, 3);
+
 		// Bridges
 
 		var valid_bridge_positions = [];
@@ -606,9 +652,6 @@ function osrpgmg_init() {
 				}
 			}
 		}
-
-		console.log(valid_bridge_positions);
-		console.log(river_start_num);
 
 		for(var i = 0; i < river_start_num; i++) {
 
@@ -637,58 +680,140 @@ function osrpgmg_init() {
 			}
 		}
 
-		// Temp display river starts
+		// Caves
 
-		/*for(i = 0; i < river_starts.length; i++) {
+		var valid_cave_positions = [];
 
-			map[river_starts[i]] = tiles['water_1111'];
-		}*/
+		for(var i = 0; i < map.length; i++) {
 
-		heightmap_render(river_map_all, 3);
+			var valid = false;
+
+			if(map[i] == tiles['mountain_grass'] || map[i] == tiles['mountain_sand']) {
+
+				var dir = {
+					'up' : get_neighbor(i, 'up'),
+					'down' : get_neighbor(i, 'down'),
+					'left' : get_neighbor(i, 'left'),
+					'right' : get_neighbor(i, 'right')
+				};
+
+				if( walkable[tile_by_num[map[dir['up']]]] || walkable[tile_by_num[map[dir['down']]]] || walkable[tile_by_num[map[dir['left']]]] || walkable[tile_by_num[map[dir['right']]]] ) {
+					valid = true;
+				}
+			}
+
+			if(map[i] == tiles['hill_grass'] || map[i] == tiles['hill_sand']) {
+
+				if(Math.random() < 0.1) {
+					valid = true;
+				}
+			}
+
+			if(valid) {
+				valid_cave_positions.push(i);
+			}
+		}
+
+		var cave_num = Math.ceil(valid_cave_positions.length / 30);
+
+		for(var i = 0; i < cave_num; i++) {
+
+			var rand_pos = valid_cave_positions[Math.floor(Math.random() * valid_cave_positions.length)];
+
+			if( tile_type[tile_by_num[map[rand_pos]]] == 'sand' ) {
+				map[rand_pos] = tiles['cave_sand'];
+			} else {
+				map[rand_pos] = tiles['cave_grass'];
+			}
+		}
+
+		// Towns / Castles
+
+		var valid_town_positions = [];
+		var valid_town_positions_water = [];
+
+		for(var i = 0; i < map.length; i++) {
+
+			var valid = false;
+
+			var dir = {
+				'up' : get_neighbor(i, 'up'),
+				'down' : get_neighbor(i, 'down'),
+				'left' : get_neighbor(i, 'left'),
+				'right' : get_neighbor(i, 'right')
+			};
+
+			if(tile_type[tile_by_num[map[i]]] == 'grass' || tile_type[tile_by_num[map[i]]] == 'sand') {
+
+				if( walkable[tile_by_num[map[dir['up']]]] || walkable[tile_by_num[map[dir['down']]]] || walkable[tile_by_num[map[dir['left']]]] || walkable[tile_by_num[map[dir['right']]]] ) {
+					valid = true;
+				}
+			}
+
+			if(valid) {
+
+				if( tile_type[tile_by_num[map[dir['up']]]] == 'water' || tile_type[tile_by_num[map[dir['down']]]] == 'water' || tile_type[tile_by_num[map[dir['left']]]] == 'water' || tile_type[tile_by_num[map[dir['right']]]] == 'water' ) {
+					valid_town_positions_water.push(i);
+				} else {
+					valid_town_positions.push(i);
+				}
+			}
+		}
+
+		var walkable_tiles = 0;
+
+		for(var i = 0; i < map.length; i++) {
+
+			if(walkable[tile_by_num[map[i]]]) {
+				walkable_tiles++;
+			}
+		}
+
+		var town_num = Math.ceil(walkable_tiles / 200);
+
+		var town_num_water = Math.min(valid_town_positions_water.length, Math.ceil(town_num / 2));
+		var town_num_dry = town_num - town_num_water;
+
+		console.log(walkable_tiles);
+		console.log(town_num_water);
+		console.log(town_num_dry);
+
+		for(var i = 0; i < town_num_water; i++) {
+
+			var rand_pos = valid_town_positions_water[Math.floor(Math.random() * valid_town_positions_water.length)];
+
+			var town_or_castle = 'town';
+
+			if(Math.random() < 0.2) {
+				town_or_castle = 'castle';
+			}
+
+			if( tile_type[tile_by_num[map[rand_pos]]] == 'sand' ) {
+				map[rand_pos] = tiles[town_or_castle+'_sand'];
+			} else {
+				map[rand_pos] = tiles[town_or_castle+'_grass'];
+			}
+		}
+
+		for(var i = 0; i < town_num_dry; i++) {
+
+			var rand_pos = valid_town_positions[Math.floor(Math.random() * valid_town_positions.length)];
+
+			var town_or_castle = 'town';
+
+			if(Math.random() < 0.2) {
+				town_or_castle = 'castle';
+			}
+
+			if( tile_type[tile_by_num[map[rand_pos]]] == 'sand' ) {
+				map[rand_pos] = tiles[town_or_castle+'_sand'];
+			} else {
+				map[rand_pos] = tiles[town_or_castle+'_grass'];
+			}
+		}
 
 		return map;
 	}
-
-	// My first try, using my own method
-	// 0 to 99 height map
-	/*function get_height_map() {
-
-		var arr = [];
-		for(i = 0; i < COLS * ROWS; i++) {
-			arr.push( -1 );
-		}
-
-		// Find mid-point
-		var mid = Math.floor(arr.length / 2);
-
-		fill_heightmap(arr, mid, 0, 99);
-
-		return arr;
-	}
-
-	function fill_heightmap(arr, loc, low, high) {
-
-		if(arr[loc] == -1) {
-
-			var this_rand = randomIntFromInterval(low,high);
-			arr[loc] = this_rand;
-			// do neighbors
-			var low_rand = this_rand - 1;
-			if(low_rand < 0) {
-				low_rand = 0;
-			}
-			var high_rand = this_rand + 1;
-			if(high_rand > 99) {
-				high_rand = 99;
-			}
-			fill_heightmap(arr, get_neighbor(loc, 'up'), low_rand,high_rand);
-			fill_heightmap(arr, get_neighbor(loc, 'right'), low_rand,high_rand);
-			fill_heightmap(arr, get_neighbor(loc, 'down'), low_rand,high_rand);
-			fill_heightmap(arr, get_neighbor(loc, 'left'), low_rand,high_rand);
-		} else {
-			
-		}
-	}*/
 
 	// Perlin noise
 	function get_perlin_noise(adjust) {
