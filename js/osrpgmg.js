@@ -337,22 +337,22 @@ function osrpgmg_init() {
 
 				var next_to_water = false;
 
-				var up = get_neighbor(map, i, 'up');
+				var up = get_neighbor(i, 'up');
 
 				if( tile_type[tile_by_num[map[up]]] == 'water' ) {
 					next_to_water = true;
 				} else {
-					var down = get_neighbor(map, i, 'down');
+					var down = get_neighbor(i, 'down');
 
 					if( tile_type[tile_by_num[map[down]]] == 'water' ) {
 						next_to_water = true;
 					} else {
-						var left = get_neighbor(map, i, 'left');
+						var left = get_neighbor(i, 'left');
 
 						if( tile_type[tile_by_num[map[left]]] == 'water' ) {
 							next_to_water = true;
 						} else {
-							var right = get_neighbor(map, i, 'right');
+							var right = get_neighbor(i, 'right');
 
 							if( tile_type[tile_by_num[map[right]]] == 'water' ) {
 								next_to_water = true;
@@ -465,11 +465,12 @@ function osrpgmg_init() {
 				continue;
 			}
 
-			// Determine flow direction
+			// Determine flow direction by finding water distance for each direction
+			// Then random chance go to closest or random direction
 
 			var flowing = true;
 
-			var flow_count = 2;
+			var flow_count = 0;
 
 			var flow_dir = 'up';
 
@@ -477,39 +478,38 @@ function osrpgmg_init() {
 
 			while(flowing) {
 
-				if(flow_count % Math.floor((Math.random()*2)+1) == 0 ) { // Only new dir every other iteration
-					flow_dir = flow_options[Math.floor(Math.random() * flow_options.length)];
-				}
-
-				//console.log('river map val: '+river_map[get_neighbor(river_map, draw_spot, flow_dir)]);
-
-				if(river_map[get_neighbor(river_map, draw_spot, flow_dir)] == 99) {
-
-					//console.log('here');
-					//flow_count++;
-				}
-
-				var flow_data = {
-					'up' : get_neighbor(height_map, draw_spot, 'up'),
-					'down' : get_neighbor(height_map, draw_spot, 'down'),
-					'left' : get_neighbor(height_map, draw_spot, 'left'),
-					'right' : get_neighbor(height_map, draw_spot, 'right')
+				var water_dist = {
+					'up'    : dist_to_water(height_map, draw_spot, 'up'),
+					'down'  : dist_to_water(height_map, draw_spot, 'down'),
+					'left'  : dist_to_water(height_map, draw_spot, 'left'),
+					'right' : dist_to_water(height_map, draw_spot, 'right')
 				};
 
-				if(up < flow_data[flow_dir]) {
-					flow_dir = 'up';
-				}
-				if(down < flow_data[flow_dir]) {
+				var flow_data = {
+					'up' : get_neighbor(draw_spot, 'up'),
+					'down' : get_neighbor(draw_spot, 'down'),
+					'left' : get_neighbor(draw_spot, 'left'),
+					'right' : get_neighbor(draw_spot, 'right')
+				};
+
+				flow_dir = 'up';
+
+				if(water_dist['down'] < water_dist[flow_dir]) {
 					flow_dir = 'down';
 				}
-				if(left < flow_data[flow_dir]) {
+				if(water_dist['left'] < water_dist[flow_dir]) {
 					flow_dir = 'left';
 				}
-				if(right < flow_data[flow_dir]) {
+				if(water_dist['right'] < water_dist[flow_dir]) {
 					flow_dir = 'right';
 				}
 
-				var new_draw_spot = get_neighbor(river_map, draw_spot, flow_dir);
+				if(river_map[flow_data[flow_dir]] == 99 || Math.random() < 0.5) {
+
+					flow_dir = flow_options[Math.floor(Math.random() * flow_options.length)];
+				}
+
+				var new_draw_spot = flow_data[flow_dir];
 
 				// If over water, or prev spot, draw and stop
 				if(tile_type[tile_by_num[map[new_draw_spot]]] == 'water' ||
@@ -581,10 +581,10 @@ function osrpgmg_init() {
 			if(high_rand > 99) {
 				high_rand = 99;
 			}
-			fill_heightmap(arr, get_neighbor(arr, loc, 'up'), low_rand,high_rand);
-			fill_heightmap(arr, get_neighbor(arr, loc, 'right'), low_rand,high_rand);
-			fill_heightmap(arr, get_neighbor(arr, loc, 'down'), low_rand,high_rand);
-			fill_heightmap(arr, get_neighbor(arr, loc, 'left'), low_rand,high_rand);
+			fill_heightmap(arr, get_neighbor(loc, 'up'), low_rand,high_rand);
+			fill_heightmap(arr, get_neighbor(loc, 'right'), low_rand,high_rand);
+			fill_heightmap(arr, get_neighbor(loc, 'down'), low_rand,high_rand);
+			fill_heightmap(arr, get_neighbor(loc, 'left'), low_rand,high_rand);
 		} else {
 			
 		}
@@ -767,33 +767,58 @@ function osrpgmg_init() {
 		return Math.sqrt( a*a + b*b );
 	}
 
-	function get_neighbor(map, val, dir) {
+	function dist_to_water(height_map, pos, dir) {
 
-		var new_val = 0;
+		var dist = 0;
+		var max_dist = ROWS;
+		var water_found = false;
+		var this_pos = pos;
+
+		while(!water_found) {
+
+			this_pos = get_neighbor(this_pos, dir);
+			dist++;
+
+			if( height_map[this_pos] < CUTOFF_WATER ) {
+
+				water_found = true;
+			}
+
+			if(dist >= max_dist) {
+				water_found = true;
+			}
+		}
+
+		return dist;
+	}
+
+	function get_neighbor(pos, dir) {
+
+		var new_pos = 0;
 		var total = ROWS * COLS;
 
 		if(dir == 'up') {
-			new_val = val - COLS; // minus one row
-			if(new_val < 0) {
-				new_val += total;
+			new_pos = pos - COLS; // minus one row
+			if(new_pos < 0) {
+				new_pos += total;
 			}
 		} else if(dir == 'down') {
-			new_val = val + COLS; // add one row
-			if(new_val >= total) {
-				new_val -= total;
+			new_pos = pos + COLS; // add one row
+			if(new_pos >= total) {
+				new_pos -= total;
 			}
 		} else if(dir == 'left') {
-			new_val = val - 1;
-			if(Math.floor(new_val / COLS) != Math.floor(val / COLS)) {
-				new_val += COLS; // add one row
+			new_pos = pos - 1;
+			if(Math.floor(new_pos / COLS) != Math.floor(pos / COLS)) {
+				new_pos += COLS; // add one row
 			}
 		} else if(dir == 'right') {
-			new_val = val + 1;
-			if(Math.floor(new_val / COLS) != Math.floor(val / COLS)) {
-				new_val -= COLS; // minus one row
+			new_pos = pos + 1;
+			if(Math.floor(new_pos / COLS) != Math.floor(pos / COLS)) {
+				new_pos -= COLS; // minus one row
 			}
 		}
-		return new_val;
+		return new_pos;
 	}
 
 	function get_tile(map, col, row) {
