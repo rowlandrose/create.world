@@ -441,6 +441,11 @@ function osrpgmg_init() {
 
 		var last_dir_opposite = '';
 
+		var river_map_all = []; // For seeing all river paths in one map, for testing
+		for(i = 0; i < height_map.length; i++) {
+			river_map_all.push(0);
+		}
+
 		for(i = 0; i < river_starts.length; i++) {
 		//for(i = 0; i < 1; i++) {
 
@@ -464,27 +469,24 @@ function osrpgmg_init() {
 
 			var flowing = true;
 
-			var flow_count = 0;
+			var flow_count = 2;
+
+			var flow_dir = 'up';
+
+			var flow_options = ['up','down','left','right'];
 
 			while(flowing) {
 
-				if(flow_count > 5000) {
-					
-					break;
+				if(flow_count % Math.floor((Math.random()*2)+1) == 0 ) { // Only new dir every other iteration
+					flow_dir = flow_options[Math.floor(Math.random() * flow_options.length)];
 				}
-
-				var flow_options = ['up','down','left','right'];
-
-				var flow_dir = flow_options[Math.floor(Math.random() * 4)];
 
 				//console.log('river map val: '+river_map[get_neighbor(river_map, draw_spot, flow_dir)]);
 
 				if(river_map[get_neighbor(river_map, draw_spot, flow_dir)] == 99) {
 
 					//console.log('here');
-					flow_count++;
-					// Try again
-					continue;
+					//flow_count++;
 				}
 
 				var flow_data = {
@@ -511,7 +513,7 @@ function osrpgmg_init() {
 
 				// If over water, or prev spot, draw and stop
 				if(tile_type[tile_by_num[map[new_draw_spot]]] == 'water' ||
-					river_map[new_draw_spot] == 99) {
+					flow_count > 2500) {
 
 					for(j = 0; j < river_map.length; j++) {
 
@@ -521,18 +523,18 @@ function osrpgmg_init() {
 					}
 
 					flowing = false;
-
-					break;
+					flow_count = 0;
 				}
 
-				river_map[new_draw_spot] = 99;
-
-				draw_spot = new_draw_spot;
+				if(river_map[new_draw_spot] == 0){
+					
+					river_map[new_draw_spot] = 99;
+					river_map_all[new_draw_spot] = 99;
+					draw_spot = new_draw_spot;
+				}
 
 				flow_count++;
 			}
-
-			heightmap_render(river_map, 3);
 		}
 
 		// Temp display river starts
@@ -541,6 +543,8 @@ function osrpgmg_init() {
 
 			map[river_starts[i]] = tiles['water_1111'];
 		}*/
+
+		heightmap_render(river_map_all, 3);
 
 		return map;
 	}
