@@ -513,8 +513,6 @@ function osrpgmg_init() {
 	            	var old_y = Math.floor(river_starts[j] / ROWS);
 					var dist = get_dist(new_x, new_x, old_x, old_y);
 
-					console.log(dist);
-
 					if(dist < RIVER_START_MIN_DIST) {
 						i--;
 						close_count++;
@@ -645,8 +643,8 @@ function osrpgmg_init() {
 					'right' : get_neighbor(i, 'right')
 				};
 
-				if( ( river_map_all[directions['up']] == 0 && tile_type[tile_by_num[map[directions['up']]]] != 'water' && river_map_all[directions['down']] == 0 && tile_type[tile_by_num[map[directions['down']]]] != 'water' ) ||
-					( river_map_all[directions['left']] == 0 && tile_type[tile_by_num[map[directions['left']]]] != 'water' && river_map_all[directions['right']] == 0 && tile_type[tile_by_num[map[directions['right']]]] != 'water' )
+				if( ( river_map_all[directions['up']] == 0 && walkable[tile_by_num[map[directions['up']]]]  && river_map_all[directions['down']] == 0 && walkable[tile_by_num[map[directions['down']]]] ) ||
+					( river_map_all[directions['left']] == 0 && walkable[tile_by_num[map[directions['left']]]]  && river_map_all[directions['right']] == 0 && walkable[tile_by_num[map[directions['right']]]] )
 				) {
 					valid_bridge_positions.push(i);
 				}
@@ -699,6 +697,10 @@ function osrpgmg_init() {
 
 				if( walkable[tile_by_num[map[dir['up']]]] || walkable[tile_by_num[map[dir['down']]]] || walkable[tile_by_num[map[dir['left']]]] || walkable[tile_by_num[map[dir['right']]]] ) {
 					valid = true;
+				}
+
+				if( valid_cave_positions.indexOf(dir['up']) !== -1 || valid_cave_positions.indexOf(dir['down']) !== -1 || valid_cave_positions.indexOf(dir['left']) !== -1 || valid_cave_positions.indexOf(dir['right']) !== -1 ) {
+					continue;
 				}
 			}
 
@@ -769,14 +771,10 @@ function osrpgmg_init() {
 			}
 		}
 
-		var town_num = Math.ceil(walkable_tiles / 200);
+		var town_num = Math.ceil(walkable_tiles / 300);
 
 		var town_num_water = Math.min(valid_town_positions_water.length, Math.ceil(town_num / 2));
 		var town_num_dry = town_num - town_num_water;
-
-		console.log(walkable_tiles);
-		console.log(town_num_water);
-		console.log(town_num_dry);
 
 		for(var i = 0; i < town_num_water; i++) {
 
@@ -784,8 +782,22 @@ function osrpgmg_init() {
 
 			var town_or_castle = 'town';
 
-			if(Math.random() < 0.2) {
+			if(Math.random() < 0.10) {
 				town_or_castle = 'castle';
+			}
+
+			var dir = {
+				'up' : get_neighbor(rand_pos, 'up'),
+				'down' : get_neighbor(rand_pos, 'down'),
+				'left' : get_neighbor(rand_pos, 'left'),
+				'right' : get_neighbor(rand_pos, 'right')
+			};
+
+			if( tile_by_num[map[dir['up']]] == 'town_grass' || tile_by_num[map[dir['up']]] == 'castle_grass' || tile_by_num[map[dir['up']]] == 'town_sand' || tile_by_num[map[dir['up']]] == 'castle_sand' || 
+				tile_by_num[map[dir['down']]] == 'town_grass' || tile_by_num[map[dir['down']]] == 'castle_grass' || tile_by_num[map[dir['down']]] == 'town_sand' || tile_by_num[map[dir['down']]] == 'castle_sand' ||
+				tile_by_num[map[dir['left']]] == 'town_grass' || tile_by_num[map[dir['left']]] == 'castle_grass' || tile_by_num[map[dir['left']]] == 'town_sand' || tile_by_num[map[dir['left']]] == 'castle_sand' ||
+				tile_by_num[map[dir['right']]] == 'town_grass' || tile_by_num[map[dir['right']]] == 'castle_grass' || tile_by_num[map[dir['right']]] == 'town_sand' || tile_by_num[map[dir['right']]] == 'castle_sand' ) {
+				continue;
 			}
 
 			if( tile_type[tile_by_num[map[rand_pos]]] == 'sand' ) {
@@ -801,8 +813,22 @@ function osrpgmg_init() {
 
 			var town_or_castle = 'town';
 
-			if(Math.random() < 0.2) {
+			if(Math.random() < 0.15) {
 				town_or_castle = 'castle';
+			}
+
+			var dir = {
+				'up' : get_neighbor(rand_pos, 'up'),
+				'down' : get_neighbor(rand_pos, 'down'),
+				'left' : get_neighbor(rand_pos, 'left'),
+				'right' : get_neighbor(rand_pos, 'right')
+			};
+
+			if( tile_by_num[map[dir['up']]] == 'town_grass' || tile_by_num[map[dir['up']]] == 'castle_grass' || tile_by_num[map[dir['up']]] == 'town_sand' || tile_by_num[map[dir['up']]] == 'castle_sand' || 
+				tile_by_num[map[dir['down']]] == 'town_grass' || tile_by_num[map[dir['down']]] == 'castle_grass' || tile_by_num[map[dir['down']]] == 'town_sand' || tile_by_num[map[dir['down']]] == 'castle_sand' ||
+				tile_by_num[map[dir['left']]] == 'town_grass' || tile_by_num[map[dir['left']]] == 'castle_grass' || tile_by_num[map[dir['left']]] == 'town_sand' || tile_by_num[map[dir['left']]] == 'castle_sand' ||
+				tile_by_num[map[dir['right']]] == 'town_grass' || tile_by_num[map[dir['right']]] == 'castle_grass' || tile_by_num[map[dir['right']]] == 'town_sand' || tile_by_num[map[dir['right']]] == 'castle_sand' ) {
+				continue;
 			}
 
 			if( tile_type[tile_by_num[map[rand_pos]]] == 'sand' ) {
