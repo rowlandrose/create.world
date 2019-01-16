@@ -1,6 +1,15 @@
 .nav-logo {
     margin-right: 10px;
 }
-.overflow_scroll {
+.full_map_container {
 	overflow: scroll;
+	margin-top: 20px;
+	width: 100%;
+	height: 300px;
+}
+h2 {
+	margin-top: 30px;
+}
+#generate_new_map {
+	margin-top: 20px;
 }
