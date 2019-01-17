@@ -41,7 +41,7 @@ var OldSchool = {
 
         <h2 class="title is-3">Downloads</h2>
 
-        <a @click="download_full_image" :href="download_href" class="button is-info" target="_blank" id="download_full_image">Download Full Image</a>
+        <a @click.prevent="download_full_image" :href="download_href" class="button is-info" target="_blank" id="download_full_image">Download Full Image</a>
 
         <p>Will be a 2048x2048 PNG</p>
 
@@ -84,6 +84,7 @@ var OldSchool = {
     methods : {
         download_full_image : function() {
             this.download_href = document.getElementById('osrpgmg').toDataURL('image/png');
+            window.open(this.download_href, '_blank');
         },
         refresh_page : function() {
             location.reload();
