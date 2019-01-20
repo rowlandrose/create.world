@@ -1,14 +1,27 @@
 
-function osrpgmg_init() {
+function osrpgmg_init(tile_num) {
+
+	if(typeof tile_num === 'undefined') {
+		tile_num = 128;
+	}
+
+	window.COLS = parseInt(tile_num);
+	window.ROWS = parseInt(tile_num);
+	window.T_SIZE = 16;
 
 	var no_cache = Math.floor(new Date().getTime() / 1000); // unix timestamp
 
-	var ctx = document.getElementById('osrpgmg').getContext('2d');
-	var pr_ctx = document.getElementById('osrpgmg_preview').getContext('2d');
+	var main_canvas = document.getElementById('osrpgmg');
+	main_canvas.width = COLS * T_SIZE;
+	main_canvas.height = ROWS * T_SIZE;
+	var ctx = main_canvas.getContext('2d');
+	var pr_canvas = document.getElementById('osrpgmg_preview');
+	pr_canvas.width = COLS * 2;
+	pr_canvas.height = ROWS * 2;
+	var pr_ctx = pr_canvas.getContext('2d');
 
-	var COLS = 128;
-	var ROWS = 128;
-	var T_SIZE = 16;
+	ctx.clearRect(0, 0, main_canvas.width, main_canvas.height);
+	pr_ctx.clearRect(0, 0, pr_canvas.width, pr_canvas.height);
 
 	var CUTOFF_TERRAIN = 80;
 	var CUTOFF_WATER = 50;
@@ -279,7 +292,12 @@ function osrpgmg_init() {
 
 		// Draw heightmap onto smaller canvas
 
-		var hm_ctx = document.getElementById('osrpgmg_heightmap_'+num).getContext('2d');
+		var hm_canvas = document.getElementById('osrpgmg_heightmap_'+num);
+		hm_canvas.width = COLS;
+		hm_canvas.height = ROWS;
+		var hm_ctx = hm_canvas.getContext('2d');
+
+		hm_ctx.clearRect(0, 0, hm_canvas.width, hm_canvas.height);
 		
 	    for (var r = 0; r < ROWS; r++) {
 			for (var c = 0; c < COLS; c++) {
@@ -771,7 +789,7 @@ function osrpgmg_init() {
 			}
 		}
 
-		var town_num = Math.ceil(walkable_tiles / 300);
+		var town_num = Math.ceil(walkable_tiles / 400);
 
 		var town_num_water = Math.min(valid_town_positions_water.length, Math.ceil(town_num / 2));
 		var town_num_dry = town_num - town_num_water;
@@ -890,7 +908,12 @@ function osrpgmg_init() {
 	// Fifth try, diamond square
 	function get_height_map() {
 
-		var terrain = new Terrain(7); // 7 -> 2^7 -> 128, 6 -> 2^6 -> 64
+		var itterations = 7;
+
+		if(COLS == 128) { itterations = 7; }
+		if(COLS == 256) { itterations = 8; }
+
+		var terrain = new Terrain(itterations); // 7 -> 2^7 -> 128, 6 -> 2^6 -> 64
 		terrain.generate(1);
 
 		var arr = [];
@@ -936,6 +959,9 @@ function osrpgmg_init() {
 
 		var land_radius = 40;
 
+		if(COLS == 128) { land_radius = 40; }
+		if(COLS == 256) { land_radius = 80; }
+
 		for (var r = 0; r < ROWS; r++) {
 			for (var c = 0; c < COLS; c++) {
 
@@ -961,7 +987,7 @@ function osrpgmg_init() {
 		// Get another heightmap, with no island, and combine with original 
 		// where meets land, to get more varied mountains
 
-		var terrain_adjust = new Terrain(7); // 7 -> 2^7 -> 128, 6 -> 2^6 -> 64
+		var terrain_adjust = new Terrain(itterations); // 7 -> 2^7 -> 128, 6 -> 2^6 -> 64
 		terrain_adjust.generate(1);
 
 		var arr_adjust = [];
@@ -1069,6 +1095,7 @@ function osrpgmg_init() {
 				new_pos -= COLS; // minus one row
 			}
 		}
+
 		return new_pos;
 	}
 

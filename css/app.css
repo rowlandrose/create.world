@@ -13,3 +13,10 @@ h2 {
 #generate_new_map {
 	margin-top: 20px;
 }
+
+small {
+	font-size: 0.6em;
+}
+.num_slider {
+	max-width: 400px;
+}
